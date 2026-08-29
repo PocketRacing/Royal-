@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>ROYAL ARENA</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:#111;color:white;font-family:Arial,sans-serif;overflow:hidden;touch-action:none}
+#game{width:100vw;height:100vh;max-width:520px;margin:auto;position:relative;background:#263b20;overflow:hidden}
+#top{height:58px;background:#151515;display:flex;align-items:center;justify-content:space-around;font-weight:bold;z-index:5;position:relative}
+.stat{text-align:center;font-size:13px}.stat b{display:block;font-size:18px}
+#arena{position:absolute;top:58px;bottom:105px;left:0;right:0;background:
+linear-gradient(#416b35 0 47%,#4b83a5 47% 53%,#416b35 53% 100%)}
+#river{position:absolute;left:0;right:0;top:47%;height:6%;background:#438bb2;border-top:3px solid #7bc5e5;border-bottom:3px solid #28627f}
+.bridge{position:absolute;top:44%;height:12%;width:18%;background:#987047;border:3px solid #62472d;border-radius:5px;z-index:2}
+.b1{left:15%}.b2{right:15%}
+.side{position:absolute;width:5px;top:0;bottom:0;background:rgba(0,0,0,.12)}
+#units{position:absolute;inset:0}
+.tower{position:absolute;width:72px;height:82px;text-align:center;z-index:3}
+.tower .building{width:58px;height:58px;margin:auto;background:#b87538;border:5px solid #633b22;border-radius:10px 10px 18px 18px;display:flex;align-items:center;justify-content:center;font-size:27px;box-shadow:0 5px 0 #43291a}
+.tower.king .building{background:#b33d38;border-color:#641e1c}
+.hp{height:9px;background:#300;margin-top:5px;border-radius:8px;overflow:hidden;border:1px solid #111}
+.hp i{display:block;height:100%;background:#48d64b;width:100%}
+.tname{font-size:11px;text-shadow:0 1px 2px #000}
+#enemyKing{top:5px;left:calc(50% - 36px)}
+#enemyL{top:70px;left:12px}
+#enemyR{top:70px;right:12px}
+#myKing{bottom:5px;left:calc(50% - 36px)}
+#myL{bottom:70px;left:12px}
+#myR{bottom:70px;right:12px}
+.unit{position:absolute;width:44px;height:50px;text-align:center;z-index:4;transition:left .08s linear,top .08s linear}
+.uicon{width:38px;height:38px;border-radius:50%;margin:auto;background:#eee;color:#222;border:3px solid #222;display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 3px 5px #0008}
+.enemy .uicon{background:#e96b67}
+.ally .uicon{background:#72a9ed}
+.uhp{height:5px;background:#222;margin-top:2px;border-radius:5px;overflow:hidden}.uhp i{display:block;height:100%;background:#40db54}
+#cards{position:absolute;bottom:0;left:0;right:0;height:105px;background:#191919;padding:8px;display:flex;gap:7px;align-items:center;z-index:10}
+.card{height:88px;flex:1;min-width:0;background:linear-gradient(#484848,#242424);border:2px solid #777;border-radius:10px;position:relative;text-align:center;padding-top:8px;cursor:pointer}
+.card:active{transform:scale(.96)}
+.card.disabled{filter:grayscale(1);opacity:.5}
+.card .emoji{font-size:32px}.card .cn{font-size:11px;font-weight:bold;white-space:nowrap}.cost{position:absolute;top:3px;left:3px;background:#873ed1;border-radius:50%;width:22px;height:22px;line-height:22px;font-size:12px;font-weight:bold}
+#energy{position:absolute;bottom:101px;left:8px;right:8px;height:7px;background:#332047;border:1px solid #8f5bd1;border-radius:8px;z-index:11}
+#energy i{display:block;height:100%;width:50%;background:#b866ef;border-radius:8px}
+#energyText{position:absolute;bottom:109px;right:10px;font-size:11px;z-index:12;text-shadow:0 1px 2px #000}
+#msg{position:absolute;top:42%;left:50%;transform:translate(-50%,-50%);background:#000c;padding:15px 25px;border-radius:14px;font-size:25px;font-weight:bold;display:none;z-index:30;text-align:center}
+#start{position:absolute;inset:0;background:#101010;z-index:50;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+#start h1{font-size:42px;margin:0 0 8px;color:#ffd34e;text-shadow:0 4px #7d4b00}
+#start p{color:#aaa}
+button{border:0;border-radius:12px;padding:15px 35px;background:#e8a92e;color:#211500;font-weight:bold;font-size:18px;cursor:pointer}
+</style>
+</head>
+<body>
+
+<div id="game">
+
+<div id="start">
+<h1>ROYAL ARENA</h1>
+<p>Тактическая битва в реальном времени</p>
+<button onclick="startGame()">НАЧАТЬ БОЙ</button>
+</div>
+
+<div id="top">
+<div class="stat">🏆<b id="wins">0</b>Победы</div>
+<div class="stat">⚔️<b id="timer">3:00</b>Бой</div>
+<div class="stat">💰<b id="gold">0</b>Золото</div>
+</div>
+
+<div id="arena">
+<div id="river"></div>
+<div class="bridge b1"></div><div class="bridge b2"></div>
+<div class="side" style="left:50%"></div>
+
+<div class="tower king" id="enemyKing"><div class="tname">КОРОЛЬ</div><div class="building">👑</div><div class="hp"><i></i></div></div>
+<div class="tower" id="enemyL"><div class="tname">БАШНЯ</div><div class="building">🏰</div><div class="hp"><i></i></div></div>
+<div class="tower" id="enemyR"><div class="tname">БАШНЯ</div><div class="building">🏰</div><div class="hp"><i></i></div></div>
+
+<div class="tower king" id="myKing"><div class="tname">КОРОЛЬ</div><div class="building">👑</div><div class="hp"><i></i></div></div>
+<div class="tower" id="myL"><div class="tname">БАШНЯ</div><div class="building">🏰</div><div class="hp"><i></i></div></div>
+<div class="tower" id="myR"><div class="tname">БАШНЯ</div><div class="building">🏰</div><div class="hp"><i></i></div></div>
+
+<div id="units"></div>
+</div>
+
+<div id="energy"><i id="energyBar"></i></div>
+<div id="energyText">5 / 10</div>
+
+<div id="cards">
+<div class="card" data-type="knight" onclick="playCard('knight')"><div class="cost">3</div><div class="emoji">🗡️</div><div class="cn">МЕЧНИК</div></div>
+<div class="card" data-type="archer" onclick="playCard('archer')"><div class="cost">2</div><div class="emoji">🏹</div><div class="cn">ЛУЧНИК</div></div>
+<div class="card" data-type="boar" onclick="playCard('boar')"><div class="cost">4</div><div class="emoji">🐗</div><div class="cn">ВЕПРЬ</div></div>
+<div class="card" data-type="mage" onclick="playCard('mage')"><div class="cost">5</div><div class="emoji">🧙</div><div class="cn">МАГ</div></div>
+</div>
+
+<div id="msg"></div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+
+let running=false,energy=5,time=180,wins=0,gold=0,last=0,uid=0;
+let units=[];
+let towerHP={
+ enemyKing:1800,enemyL:900,enemyR:900,
+ myKing:1800,myL:900,myR:900
+};
+
+const types={
+ knight:{cost:3,hp:500,dmg:75,speed:.42,range:32,rate:850,icon:"🗡️"},
+ archer:{cost:2,hp:240,dmg:48,speed:.34,range:125,rate:950,icon:"🏹"},
+ boar:{cost:4,hp:650,dmg:105,speed:.7,range:30,rate:900,icon:"🐗"},
+ mage:{cost:5,hp:390,dmg:90,speed:.3,range:115,rate:1100,icon:"🧙"}
+};
+
+function startGame(){
+ $("start").style.display="none";
+ running=true;
+ last=performance.now();
+ requestAnimationFrame(loop);
+ setInterval(()=>{if(running)bot();},1800);
+}
+
+function spawn(type,enemy,x){
+ let t=types[type];
+ let y=enemy?75:document.querySelector("#arena").clientHeight-90;
+ let el=document.createElement("div");
+ el.className="unit "+(enemy?"enemy":"ally");
+ el.innerHTML=`<div class="uicon">${t.icon}</div><div class="uhp"><i></i></div>`;
+ $("units").appendChild(el);
+
+ let u={id:++uid,type,enemy,x:x||innerWidth/2,y,hp:t.hp,max:t.hp,dmg:t.dmg,last:0,el};
+ units.push(u);
+ draw(u);
+ return u;
+}
+
+function draw(u){
+ u.el.style.left=(u.x-22)+"px";
+ u.el.style.top=(u.y-25)+"px";
+ u.el.querySelector(".uhp i").style.width=Math.max(0,u.hp/u.max*100)+"%";
+}
+
+function playCard(type){
+ if(!running)return;
+ let t=types[type];
+ if(energy<t.cost)return;
+ energy-=t.cost;
+ updateEnergy();
+
+ // место появления выбирается нажатием на левую/правую сторону
+ let x=Math.random()<.5?innerWidth*.35:innerWidth*.65;
+ spawn(type,false,x);
+}
+
+$("arena").addEventListener("pointerdown",e=>{
+ if(!running)return;
+ // если нажали на поле — играем выбранную карту нельзя,
+ // поэтому просто создаём дешёвого мечника за 3 энергии
+ if(e.target.id==="arena"||e.target.id==="river"){
+   if(energy>=3){
+    energy-=3;
+    spawn("knight",false,e.offsetX);
+    updateEnergy();
+   }
+ }
+});
+
+function updateEnergy(){
+ $("energyBar").style.width=(energy/10*100)+"%";
+ $("energyText").textContent=Math.floor(energy)+" / 10";
+ document.querySelectorAll(".card").forEach(c=>{
+  let t=types[c.dataset.type];
+  c.classList.toggle("disabled",energy<t.cost);
+ });
+}
+
+function bot(){
+ if(!running)return;
+ let keys=Object.keys(types);
+ let type=keys[Math.floor(Math.random()*keys.length)];
+ spawn(type,true,Math.random()<.5?innerWidth*.35:innerWidth*.65);
+}
+
+function findTarget(u){
+ let enemies=units.filter(v=>v.enemy!==u.enemy&&v.hp>0);
+ let best=null,dist=9999;
+ enemies.forEach(v=>{
+  let d=Math.hypot(v.x-u.x,v.y-u.y);
+  if(d<dist){dist=d;best=v}
+ });
+ return best;
+}
+
+function towerTarget(u){
+ let id;
+ if(u.enemy){
+  id=u.x<innerWidth/2?"myL":"myR";
+  if(towerHP[id]<=0)id="myKing";
+ }else{
+  id=u.x<innerWidth/2?"enemyL":"enemyR";
+  if(towerHP[id]<=0)id="enemyKing";
+ }
+ return $(id);
+}
+
+function attackTower(u,tower){
+ let now=performance.now();
+ if(now-u.last<types[u.type].rate)return;
+ u.last=now;
+
+ let id=tower.id;
+ towerHP[id]-=u.dmg;
+ tower.querySelector(".hp i").style.width=Math.max(0,towerHP[id]/(id.includes("King")?1800:900)*100)+"%";
+
+ if(towerHP[id]<=0){
+  tower.style.opacity=".35";
+  if(id==="enemyKing")end(true);
+  if(id==="myKing")end(false);
+ }
+}
+
+function attackUnit(a,b){
+ let now=performance.now();
+ if(now-a.last<types[a.type].rate)return;
+ a.last=now;
+ b.hp-=a.dmg;
+ draw(b);
+ if(b.hp<=0){
+  b.el.remove();
+  units=units.filter(x=>x!==b);
+ }
+}
+
+function update(dt){
+ // энергия
+ energy=Math.min(10,energy+dt*.0011);
+ updateEnergy();
+
+ // юниты
+ units.forEach(u=>{
+  if(u.hp<=0)return;
+  let t=findTarget(u);
+  let d=t?Math.hypot(t.x-u.x,t.y-u.y):9999;
+
+  if(t && d<=types[u.type].range+25){
+   attackUnit(u,t);
+  }else{
+   let tower=towerTarget(u);
+   let tx=parseFloat(tower.offsetLeft+tower.offsetWidth/2);
+   let ty=parseFloat(tower.offsetTop+tower.offsetHeight/2);
+
+   if(!t || d>types[u.type].range+25){
+    let dx=tx-u.x,dy=ty-u.y;
+    let len=Math.hypot(dx,dy)||1;
+    u.x+=dx/len*types[u.type].speed*dt;
+    u.y+=dy/len*types[u.type].speed*dt;
+    draw(u);
+
+    if(Math.hypot(tx-u.x,ty-u.y)<55)
+      attackTower(u,tower);
+   }
+  }
+ });
+}
+
+function loop(now){
+ if(!running)return;
+ let dt=Math.min(40,now-last);
+ last=now;
+
+ update(dt);
+
+ time-=dt/1000;
+ if(time<=0){
+  time=0;
+  end(towerHP.enemyKing>towerHP.myKing);
+ }
+ let m=Math.floor(time/60),s=Math.floor(time%60);
+ $("timer").textContent=m+":"+(s<10?"0":"")+s;
+
+ requestAnimationFrame(loop);
+}
+
+function end(win){
+ if(!running)return;
+ running=false;
+
+ if(win){
+  wins++;
+  gold+=100;
+  $("wins").textContent=wins;
+  $("gold").textContent=gold;
+  showMsg("🏆 ПОБЕДА!<br><small>+100 золота</small>");
+ }else{
+  showMsg("💀 ПОРАЖЕНИЕ");
+ }
+}
+
+function showMsg(text){
+ $("msg").innerHTML=text;
+ $("msg").style.display="block";
+
+ setTimeout(()=>{
+  $("msg").innerHTML+="<br><button onclick='location.reload()'>НОВЫЙ БОЙ</button>";
+ },900);
+}
+
+updateEnergy();
+</script>
+</body>
+</html>
